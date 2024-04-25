@@ -8,17 +8,17 @@ from DataTransforms import createBackgroundImages
 
 labelMap = {'Background':0, 'Insulator':1, 'Flashover damage':2, 'Broken':3, 'No issues':4, 'notbroken-notflashed':4}
 
-with open ('/Users/HP/Documents/InsulatorInspector/Data/Train/labels.json', 'r') as f:
+with open ('/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data/Train/labels.json', 'r') as f:
     labels = json.load(f)
 
-trainImageNames = os.listdir('/Users/HP/Documents/InsulatorInspector/Data/Train/Images')
+trainImageNames = os.listdir('/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data/Train/Images')
 trainImages = []
 trainObjectDict = {'bbox':[], 'labels':[]} #bbox is a list of float tensors, #category is a list of long tensors
 trainObjects = [trainObjectDict.copy() for i in range(len(trainImageNames)-1)]
 
 
 for i in range(len(trainImageNames) - 1):
-    trainImages.append(os.path.join('/Users/HP/Documents/InsulatorInspector/Data/Train/Images', labels[i]['filename']))
+    trainImages.append(os.path.join('/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data/Train/Images', labels[i]['filename']))
     objectList = labels[i]['Labels']['objects'] #list of objects for an image
 
     bboxes_list = []
@@ -53,7 +53,6 @@ print(len(trainImages), len(trainObjects))
 
 #Do Train/Test split
 dataLists = list(zip(trainImages, trainObjects))
-print(len(dataLists))
 testSize = int(len(trainImages)*0.1)
 valSize = int(len(trainImages)*0.1)
 random.shuffle(dataLists)
@@ -62,7 +61,6 @@ testLists = dataLists[:testSize]
 valLists = dataLists[testSize:testSize+valSize]
 trainLists = dataLists[testSize+valSize:]
 
-print(len(testLists), len(valLists), len(trainLists))
 testImages, testObjects = zip(*testLists)
 trainImages, trainObjects = zip(*trainLists)    
 valImages, valObjects = zip(*valLists)
@@ -79,23 +77,22 @@ for image in valImages:
     os.replace(image, newImagePath)
     updatedValImages.append(newImagePath)
 
-print(len(updatedValImages), len(updatedTestImages))
 assert len(updatedValImages) == len(updatedTestImages) 
 
-with open(os.path.join('/Users/HP/Documents/InsulatorInspector/Data/ProcessedData', 'Train_Images.json'), 'w') as f:
+with open(os.path.join('/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data/ProcessedData', 'train_Images.json'), 'w') as f:
     json.dump(trainImages, f)
 
-with open(os.path.join('/Users/HP/Documents/InsulatorInspector/Data/ProcessedData', 'Train_Objects.json'), 'w') as f:
+with open(os.path.join('/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data/ProcessedData', 'train_Objects.json'), 'w') as f:
     json.dump(trainObjects, f)
 
-with open(os.path.join('/Users/HP/Documents/InsulatorInspector/Data/ProcessedData', 'Val_Images.json'), 'w') as f:
+with open(os.path.join('/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data/ProcessedData', 'val_Images.json'), 'w') as f:
     json.dump(updatedValImages, f)
 
-with open(os.path.join('/Users/HP/Documents/InsulatorInspector/Data/ProcessedData', 'Val_Objects.json'), 'w') as f:
+with open(os.path.join('/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data/ProcessedData', 'val_Objects.json'), 'w') as f:
     json.dump(valObjects, f)
 
-with open(os.path.join('/Users/HP/Documents/InsulatorInspector/Data/ProcessedData', 'Test_Images.json'), 'w') as f:
+with open(os.path.join('/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data/ProcessedData', 'test_Images.json'), 'w') as f:
     json.dump(updatedTestImages, f)
 
-with open(os.path.join('/Users/HP/Documents/InsulatorInspector/Data/ProcessedData', 'Test_Objects.json'), 'w') as f:
+with open(os.path.join('/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data/ProcessedData', 'test_Objects.json'), 'w') as f:
     json.dump(testObjects, f)
