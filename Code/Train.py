@@ -8,7 +8,7 @@ from Model import SSD300, MultiBoxLoss
 from Datasets import InsulatorDataset
 from DataTransforms import *
 
-dataFolderPath = '/Users/HP/Documents/InsulatorInspector/Data/ProcessedData'
+dataFolderPath = '/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data/ProcessedData'
 
 #Model params
 numClasses = 5
@@ -178,6 +178,7 @@ def validate(valLoader, model, criterion, epoch):
     model.eval()
 
     batchTime = AverageMeter()
+    dataLoadingTime = AverageMeter()
     losses = AverageMeter()
 
     epochLossSum = 0
@@ -198,6 +199,14 @@ def validate(valLoader, model, criterion, epoch):
 
         start = time.time() 
         epochLossSum += loss.item()
+        if i % 5 == 0:
+            print('Epoch: [{0}][{1}/{2}]\t'
+                  'Time {batchTime.val:.3f} ({batchTime.avg:.3f})\t'
+                  'Data {dataLoadingTime.val:.3f} ({dataLoadingTime.avg:.3f})\t'
+                  'Train Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
+                   epoch, i, len(valLoader), batchTime=batchTime,
+                   dataLoadingTime=dataLoadingTime, loss=losses))
+            
     del predictedLocs, predictedScores, images, bBoxes, labels #Free up memory 
     print('Validation Loss: ', loss.item()/len(valLoader))
     return loss.item()/len(valLoader) #averaged loss after one epoch of validation

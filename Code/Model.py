@@ -204,7 +204,7 @@ class PredictionConvolutions(nn.Module):
 
         self.initPredictionConvolutions()
     
-    def initPredictionConvolutions(self):
+    def initPredictionConvolutions(self): #TODO: Initialize final layer bias to have essentially uniform logits on to avoid hockey stick loss
         """
         Initialize weights and biases with xavier uniform and zeros respectively
         """
