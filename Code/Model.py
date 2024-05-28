@@ -24,9 +24,9 @@ class VGG16Base(nn.Module):
         self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
 
         self.conv3_1 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
-        self.conv3_2 = nn.Conv2d(256, 256, kernel_size=3, padding=1)    
+        self.conv3_2 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
         self.conv3_3 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
-        self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode = True) 
+        self.pool3 = nn.MaxPool2d(kernel_size=2, stride=2, ceil_mode = True)
 
         self.conv4_1 = nn.Conv2d(256, 512, kernel_size=3, padding=1)
         self.conv4_2 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
@@ -40,11 +40,11 @@ class VGG16Base(nn.Module):
 
         #Dilate the kernel by a factor of six to fill in holes from decimation
         self.conv6 = nn.Conv2d(512, 1024, kernel_size=3, padding=6, dilation=6)
-        
+
         self.conv7 = nn.Conv2d(1024, 1024, kernel_size=1)
 
         self.loadPretrainedLayers()
-    
+
     def forward(self, image):
         """
         Forward pass through the network
@@ -94,9 +94,9 @@ class VGG16Base(nn.Module):
             stateDict[parameter] = pretrainedStateDict[pretrainedParameterNames[i]]
 
         #Convert fc6, fc7 to convolutional layers, then decimate to sizes of conv6 and conv7
-        #An FC layer that takes in C*H*W flattened 2D input is the same as a Conv layer with kernel (H,W), 
+        #An FC layer that takes in C*H*W flattened 2D input is the same as a Conv layer with kernel (H,W),
         #input channels C, padding = 0, output channels K operating on the same (C * H * W) input 2D image
-            
+
         fc6ToConvWeight = pretrainedStateDict['classifier.0.weight'].view(4096, 512, 7, 7) #fc6 has flattened input size of 7 * 7 *512, output of 4096
         fc6ToConvBias = pretrainedStateDict['classifier.0.bias'] #4096 biases
         stateDict['conv6.weight'] = decimate(fc6ToConvWeight, m=[4, None, 3, 3]) #decimate by 4 in height and width, keep all channels --> (1024, 512, 3, 3)
@@ -108,7 +108,7 @@ class VGG16Base(nn.Module):
         stateDict['conv7.bias'] = decimate(fc7ToConvBias, m=[4]) #decimate by 4 --> (1024)
 
         self.load_state_dict(stateDict)
-        
+
         print("\nLoaded pretrained VGG16 weights and biases successfully.\n")
 
 class AuxiliaryConvolutions(nn.Module):
@@ -121,7 +121,7 @@ class AuxiliaryConvolutions(nn.Module):
         self.conv8_1 = nn.Conv2d(1024, 256, kernel_size=1, padding=0) #kernel_size = 1, padding = 0, so size remains the same - output: 19x19
         self.conv8_2 = nn.Conv2d(256, 512, kernel_size=3, stride=2, padding=1) #output: 10x10
 
-        self.conv9_1 = nn.Conv2d(512, 128, kernel_size = 1, padding = 0) 
+        self.conv9_1 = nn.Conv2d(512, 128, kernel_size = 1, padding = 0)
         self.conv9_2 = nn.Conv2d(128, 256, kernel_size = 3, stride = 2, padding = 1) #output: 5x5
 
         self.conv10_1 = nn.Conv2d(256, 128, kernel_size = 1, padding = 0)
@@ -146,11 +146,11 @@ class AuxiliaryConvolutions(nn.Module):
         :param conv7_features: lower-level conv7 feature map, tensor of dimensions (N, 1024, 19, 19)
         :return: higher-level feature maps from conv8_2, conv9_2, conv10_2, conv11_2
         """
-        
+
         out = F.relu(self.conv8_1(conv7_features)) #(N, 256, 19, 19)
         out = F.relu(self.conv8_2(out)) #(N, 512, 10, 10)
         conv8_2_features = out #(N, 512, 10, 10)
-        
+
         out = F.relu(self.conv9_1(out))
         out = F.relu(self.conv9_2(out))
         conv9_2_features = out #(N, 256, 5, 5)
@@ -203,7 +203,7 @@ class PredictionConvolutions(nn.Module):
         self.class_conv11_2 = nn.Conv2d(256, numPriorBoxes['conv11_2'] * numClasses, kernel_size=3, padding=1)
 
         self.initPredictionConvolutions()
-    
+
     def initPredictionConvolutions(self): #TODO: Initialize final layer bias to have essentially uniform logits on to avoid hockey stick loss
         """
         Initialize weights and biases with xavier uniform and zeros respectively
@@ -227,9 +227,9 @@ class PredictionConvolutions(nn.Module):
         batchSize = conv4_3_features.size(0)
 
         #Predict localization bounding boxes (as offsets) for each of the 8732 prior boxes
-        loc_conv4_3 = self.offset_conv4_3(conv4_3_features) #(N, 16, 38, 38), four offsets per prior, 16 predictions in total 
+        loc_conv4_3 = self.offset_conv4_3(conv4_3_features) #(N, 16, 38, 38), four offsets per prior, 16 predictions in total
         loc_conv4_3 = loc_conv4_3.permute(0, 2, 3, 1).contiguous() #(N, 38, 38, 16), .view() requires contiguous chunk of memory
-        loc_conv4_3 = loc_conv4_3.view(batchSize, -1, 4) #(N, 5776, 4), -1 ensures that total number of elements remains same. 
+        loc_conv4_3 = loc_conv4_3.view(batchSize, -1, 4) #(N, 5776, 4), -1 ensures that total number of elements remains same.
         #There are N images that each contain 5776 predicted localization bounding boxes (four priors every pixel of the 38x38 input), each box with 4 offsets
 
         loc_conv7 = self.offset_conv7(conv7_features) #(N, 24, 19, 19)
@@ -311,7 +311,7 @@ class SSD300(nn.Module):
 
     def forward(self, images):
         """
-        Forward prop. 
+        Forward prop.
 
         :param images: images, tensor of dims (N, 3, 300, 300)
         :return: 8732 bounding box predictions (offsets) and class scores for each image
@@ -330,12 +330,11 @@ class SSD300(nn.Module):
         self.auxiliaryConvs(conv7_features) #(N, 512, 10, 10), (N, 256, 5, 5), (N, 256, 3, 3), (N, 256, 1, 1)
 
         #Run prediction convolutions (generate offsets for the 8732 prior boxes and class scores for each localization box encoded by the offsets)
-        locs, classesScores = self.predictionConvs(conv4_3_features, conv7_features, conv8_2_features, 
+        locs, classesScores = self.predictionConvs(conv4_3_features, conv7_features, conv8_2_features,
                                                  conv9_2_features, conv10_2_features, conv11_2_features) #(N, 8732, 4), (N, 8732, numClasses)
 
-
         return locs, classesScores
-    
+
     def createPriorBoxes(self):
         """
         Create the 8732 priors for the SSD300
@@ -348,21 +347,21 @@ class SSD300(nn.Module):
                         'conv9_2': 5,
                         'conv10_2': 3,
                         'conv11_2': 1}
-        
+
         priorScales = {'conv4_3': 0.1,
                     'conv7': 0.2,
                     'conv8_2': 0.375,
                     'conv9_2': 0.55,
                     'conv10_2': 0.725,
                     'conv11_2': 0.9}
-        
+
         aspectRatios = {'conv4_3': [1., 2., 0.5],
                         'conv7': [1., 2., 3., 0.5, .333],
                         'conv8_2': [1., 2., 3., 0.5, .333],
                         'conv9_2': [1., 2., 3., 0.5, .333],
                         'conv10_2': [1., 2., 0.5],
                         'conv11_2': [1., 2., 0.5]}
-        
+
         featureMaps = list(featureMapDims.keys())
 
         priorBoxes = []
@@ -387,15 +386,15 @@ class SSD300(nn.Module):
                             except IndexError:
                                 additionalScale = 1.
                             priorBoxes.append([cx, cy, additionalScale, additionalScale])
-            
-        priorBoxes = torch.FloatTensor(priorBoxes) #Convert to tensor
+
+        priorBoxes = torch.FloatTensor(priorBoxes).to(device) #Convert to tensor
         return priorBoxes
 
     def detectObjects(self, predictedLocs, predictedClassScores, minScore, maxOverlap, topK):
         """
         Decode the 8732 predicted localization offsets and class scores to detect objects
 
-        For each class, perform non-maximum suppression (NMS) on candidate boxes above a min threshold 
+        For each class, perform non-maximum suppression (NMS) on candidate boxes above a min threshold
 
         :param predictedLocs: predicted offsets/locations for each prior box, tensor of dimensions (N, 8732, 4)
         :param predictedClassScores: predicted class scores for each prior box, tensor of dimensions (N, 8732, numClasses)
@@ -469,9 +468,9 @@ class SSD300(nn.Module):
                 imageLabels.append(torch.LongTensor([0]).to(device))
                 imageScores.append(torch.FloatTensor([0.]).to(device))
 
-            #Now that we've matched one box per object for this particular class, 
+            #Now that we've matched one box per object for this particular class,
             #Concatenate into single tensors.
-            imageBboxes = torch.cat(imageBboxes, dim=0) #(numObjects, 4)    
+            imageBboxes = torch.cat(imageBboxes, dim=0) #(numObjects, 4)
             imageLabels = torch.cat(imageLabels, dim=0) #(numObjects)
             imageScores = torch.cat(imageScores, dim=0) #(numObjects)
             numObjects = imageScores.size(0)
@@ -493,11 +492,11 @@ class SSD300(nn.Module):
 
 class MultiBoxLoss(nn.Module):
     """
-    Multibox loss, common loss function for object detection. 
+    Multibox loss, common loss function for object detection.
 
     Two parts:
-    1. localization loss for predicted locations of boxes, 
-    2. Confidence loss for predicted class scores 
+    1. localization loss for predicted locations of boxes,
+    2. Confidence loss for predicted class scores
     """
     def __init__(self, priorsCenter, threshold = 0.5, negPosRatio = 3, alpha = 1.):
         super(MultiBoxLoss, self).__init__()
@@ -507,7 +506,7 @@ class MultiBoxLoss(nn.Module):
         self.negPosRatio = negPosRatio
         self.alpha = alpha
 
-        self.smoothL1Loss = nn.SmoothL1Loss() 
+        self.smoothL1Loss = nn.SmoothL1Loss()
         self.crossEntropyLoss = nn.CrossEntropyLoss(reduce = False)
 
     def forward(self, predictedLocs, predictedClassScores, trueBboxes, trueLabels):
@@ -523,7 +522,7 @@ class MultiBoxLoss(nn.Module):
         batchSize = predictedLocs.size(0)
         numPriorBoxes = self.priorsCenter.size(0)
         numClasses = predictedClassScores.size(2)
-        
+
         assert numPriorBoxes == predictedLocs.size(1) == predictedClassScores.size(1)
 
         trueLocs = torch.zeros((batchSize, numPriorBoxes, 4), dtype=torch.float).to(device)
@@ -537,10 +536,10 @@ class MultiBoxLoss(nn.Module):
             #Match each of the 8732 priors to object with which it has max overlap
             maxOverlapForEachPrior, objectForEachPrior = overlaps.max(dim=0) #(8732)
 
-            #Ensure that all objects are represented in positive priors (non-background). In other words, we want to ensure that all ground truth objects are matched with a prior - 
+            #Ensure that all objects are represented in positive priors (non-background). In other words, we want to ensure that all ground truth objects are matched with a prior -
             #1. An object might not be the best object for all priors so none of the priors would contain that object
             #2. All priors with the object could also be assigned as background priors based on the threshold of 0.5
-            
+
             #Find prior with max overlap for each object
             _, maxPriorForEachObject = overlaps.max(dim=1) #(numObjects)
             #Assign each object to its max overlap prior
@@ -564,7 +563,7 @@ class MultiBoxLoss(nn.Module):
         #Compute confidence loss over positive priors and most difficult (negative/hardest) negative priors for each image.
         #For each image, take the hardest negative priors, or priors with the greatest cross entropy loss, (negPosRatio * numPositives),
         #This is Hard Negative Mining - focuses on hardest negatives in each image, minimizes pos/neg imbalance
-        
+
         numPositives = positivePriors.sum(dim=1) #(N)
         numHardNegatives = self.negPosRatio * numPositives #(N)
         #Find loss for all priors
@@ -572,20 +571,21 @@ class MultiBoxLoss(nn.Module):
         confLossAll = confLossAll.view(batchSize, numPriorBoxes) #(N, 8732)
 
         confLossPos = confLossAll[positivePriors] #(numPositives)
-        
+
         #Find hard-negative priors (priors which the model performed the worst on)
         confLossNeg = confLossAll.clone() #(N, 8732)
         confLossNeg[positivePriors] = 0. #(N, 8732), set positive priors' loss to 0 since positive priors are never in the top n hard negatives
         confLossNeg, _ = confLossNeg.sort(dim = 1, descending = True) #(N, 8732), sort losses for each image in descending order/hardness
-        hardnessRanks = torch.LongTensor(range(numPriorBoxes)).unsqueeze(0).expand_as(confLossNeg).to(device) #(N, 8732) 
+        hardnessRanks = torch.LongTensor(range(numPriorBoxes)).unsqueeze(0).expand_as(confLossNeg).to(device) #(N, 8732)
         hardNegatives = hardnessRanks < numHardNegatives.unsqueeze(1) #(N, 8732), 1s for hard negatives, 0s for easy negatives
         confLossHardNeg = confLossAll[hardNegatives] #sum(hardNegatives), contains loss for hard negatives only
 
         #Average confidence loss over positive priors, compute both positive and hard-negative priors
         confLoss = (confLossHardNeg.sum() + confLossPos.sum()) / numPositives.sum().float() #scalar
-    
+
         #Total loss - confidence loss and localization loss
         return confLoss + self.alpha*locLoss
+
     
 def main():
     model = VGG16Base()
