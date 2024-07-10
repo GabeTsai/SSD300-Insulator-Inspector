@@ -31,7 +31,7 @@ def main():
     """
     Train the SSD300 model
     """
-    decayLrAt = [80000, 100000]
+    # decayLrAt = [80000, 100000]
 
     #Initialize model
     if checkpointPath is None:
@@ -46,7 +46,7 @@ def main():
                     biases.append(param)
                 else:
                     weights.append(param)
-        optimizer = torch.optim.SGD(params=[{'params': biases, 'lr': 2*lr}, {'params': weights}],
+        optimizer = torch.optim.SGD(params=[{'params': biases, 'lr': lr}, {'params': weights}],
                                     lr=lr, momentum=momentum, weight_decay=weightDecay)
     #Alternatively, load a checkpoint if it exists
     else:
@@ -81,29 +81,22 @@ def main():
     )
 
     epochs = iterations // (len(trainDataset) // batchSize)
-    print(decayLrAt)
-    decayLrAt = [it // (len(trainDataset) // batchSize) for it in decayLrAt]
+    # decayLrAt = [it // (len(trainDataset) // batchSize) for it in decayLrAt]
+    print(epochs)
 
-    #Epochs
-    lowestValLoss = np.inf
     trainLossList = []
     epochList = []
     valLossList = []
 
     for epoch in range(startEpoch, epochs):
-        if epoch in decayLrAt:
-            decayLearningRate(optimizer, lrDecayFraction)
+        # if epoch in decayLrAt:
+        #     decayLearningRate(optimizer, lrDecayFraction)
 
         loss = train(trainLoader = trainLoader, model = model, 
               criterion = criterion, optimizer = optimizer, epoch = epoch)
 
         valLoss = validate(valLoader = valLoader, model = model, 
-              criterion = criterion, epoch = epoch)
-        
-        if valLoss < lowestValLoss:
-            lowestValLoss = valLoss
-            print("Lower validation loss reached, saving checkpoint")
-            saveCheckpoint(epoch, model, optimizer)
+              criterion = criterion, epoch = epoch, optimizer = optimizer)
 
         epochList.append(epoch)
         trainLossList.append(loss)
@@ -154,7 +147,7 @@ def train(trainLoader, model, criterion, optimizer, epoch):
         batchTime.update(time.time() - start)
 
         start = time.time() 
-        if i % 5 == 0:
+        if i % 1 == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Time {batchTime.val:.3f} ({batchTime.avg:.3f})\t'
                   'Data {dataLoadingTime.val:.3f} ({dataLoadingTime.avg:.3f})\t'
@@ -165,7 +158,7 @@ def train(trainLoader, model, criterion, optimizer, epoch):
     del predictedLocs, predictedScores, images, bBoxes, labels #Free up memory 
     return epochLossSum/len(trainLoader) #averaged loss after one epoch of training
 
-def validate(valLoader, model, criterion, epoch):
+def validate(valLoader, model, criterion, epoch, optimizer):
     """
     One epoch of validation
 
@@ -183,6 +176,8 @@ def validate(valLoader, model, criterion, epoch):
 
     epochLossSum = 0
     start = time.time()
+    lowestValLoss = np.inf
+
     for i, (images, bBoxes, labels) in enumerate(valLoader):
         images = images.to(device)
         bBoxes = [b.to(device) for b in bBoxes]
@@ -193,23 +188,26 @@ def validate(valLoader, model, criterion, epoch):
         
         #Compute multibox loss
         loss = criterion(predictedLocs, predictedScores, bBoxes, labels)
-
+        if loss < lowestValLoss:
+            lowestValLoss = loss
+            print("Lower validation loss reached, saving checkpoint")
+            saveCheckpoint(epoch, model, optimizer)
         losses.update(loss.item(), images.size(0))
         batchTime.update(time.time() - start)
 
         start = time.time() 
         epochLossSum += loss.item()
-        if i % 5 == 0:
+        if i % 1 == 0:
             print('Epoch: [{0}][{1}/{2}]\t'
                   'Time {batchTime.val:.3f} ({batchTime.avg:.3f})\t'
                   'Data {dataLoadingTime.val:.3f} ({dataLoadingTime.avg:.3f})\t'
-                  'Train Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
+                  'Validation Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
                    epoch, i, len(valLoader), batchTime=batchTime,
                    dataLoadingTime=dataLoadingTime, loss=losses))
             
     del predictedLocs, predictedScores, images, bBoxes, labels #Free up memory 
-    print('Validation Loss: ', loss.item()/len(valLoader))
-    return loss.item()/len(valLoader) #averaged loss after one epoch of validation
+    print('Averaged Validation Loss: ', epochLossSum/len(valLoader))
+    return epochLossSum/len(valLoader) #averaged loss after one epoch of validation
 
 def plotLosses(trainLosses, valLosses, epochs):
     """
