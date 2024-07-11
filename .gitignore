@@ -1,0 +1,10 @@
+#Images
+Data/Test/
+Data/Train/
+Data/Val/
+
+#Checkpoints
+Checkpoints/
+
+#__pycache__/
+Code/__pycache__/
