@@ -415,7 +415,7 @@ def clipGradient(optimizer, gradClip):
             if param.grad is not None:
                 param.grad.data.clamp_(-gradClip, gradClip)
 
-def saveCheckpoint(epoch, model, optimizer):
+def saveCheckpoint(epoch, model, optimizer, folder):
     """
     Save model checkpoint
 
@@ -425,7 +425,7 @@ def saveCheckpoint(epoch, model, optimizer):
     """
     state = {'epoch': epoch, 'model': model, 'optimizer': optimizer}
     filename = 'insulatorInspectorCheckpoint.pth.tar'
-    torch.save(state, filename)
+    torch.save(state, folder + '/' + filename)
 
 class AverageMeter(object):
     """

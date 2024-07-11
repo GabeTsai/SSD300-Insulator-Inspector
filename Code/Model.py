@@ -1,7 +1,7 @@
 from torch import nn 
 from torch.nn import functional as F
 import torchvision
-from DataTransforms import *
+from DataUtils import *
 from math import sqrt
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

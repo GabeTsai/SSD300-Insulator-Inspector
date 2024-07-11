@@ -8,17 +8,17 @@ dataPath = '/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data'
 
 labelMap = {'Background':0, 'Insulator':1, 'Flashover damage':2, 'Broken':3, 'No issues':4, 'notbroken-notflashed':4}
 
-with open (os.path.join(dataPath, 'Train/labels.json'), 'r') as f:
+with open (os.path.join(dataPath, 'labels.json'), 'r') as f:
     labels = json.load(f)
 
-trainImageNames = os.listdir(os.path.join(dataPath, 'Train/Images'))
+trainImageNames = os.listdir(os.path.join(dataPath, 'Train'))
 trainImages = []
 trainObjectDict = {'bbox':[], 'labels':[]} #bbox is a list of float tensors, #category is a list of long tensors
 trainObjects = [trainObjectDict.copy() for i in range(len(trainImageNames)-1)]
 
 
 for i in range(len(trainImageNames) - 1):
-    trainImages.append(os.path.join(os.path.join(dataPath, 'Train/Images'), labels[i]['filename']))
+    trainImages.append(os.path.join(os.path.join(dataPath, 'Train'), labels[i]['filename']))
     objectList = labels[i]['Labels']['objects'] #list of objects for an image
 
     bboxes_list = []
@@ -67,13 +67,13 @@ valImages, valObjects = zip(*valLists)
 
 updatedTestImages = []
 for image in testImages:    
-    newImagePath = image.replace('Train/Images', 'Test')
+    newImagePath = image.replace('Train', 'Test')
     os.replace(image, newImagePath)
     updatedTestImages.append(newImagePath)
 
 updatedValImages = []
 for image in valImages:
-    newImagePath = image.replace('Train/Images', 'Val')
+    newImagePath = image.replace('Train', 'Val')
     os.replace(image, newImagePath)
     updatedValImages.append(newImagePath)
 

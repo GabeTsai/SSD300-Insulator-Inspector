@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 import json
 import os
 from PIL import Image
-from DataTransforms import transform
+from DataUtils import transform
 
 class InsulatorDataset(Dataset):
     def __init__(self, dataFolder, split):

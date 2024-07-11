@@ -6,24 +6,25 @@ import torch.utils.data
 import matplotlib.pyplot as plt 
 from Model import SSD300, MultiBoxLoss
 from Datasets import InsulatorDataset
-from DataTransforms import *
+from DataUtils import *
 
 dataFolderPath = '/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data/ProcessedData'
 
 #Model params
 numClasses = 5
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.manual_seed(1337)
 
 #Training params
 checkpointPath = None
 batchSize = 8
 iterations = 120000
 workers = 4 #Number of workers for dataloader
-lr = 1e-3
-lrDecayFraction = 0.1
-momentum = 0.9
-weightDecay = 5e-4
-gradClip = None
+lr = 3e-4
+# lrDecayFraction = 0.1
+# momentum = 0.9
+# weightDecay = 5e-4
+# gradClip = None
 
 cudnn.benchmark = True
 
@@ -46,8 +47,9 @@ def main():
                     biases.append(param)
                 else:
                     weights.append(param)
-        optimizer = torch.optim.SGD(params=[{'params': biases, 'lr': lr}, {'params': weights}],
-                                    lr=lr, momentum=momentum, weight_decay=weightDecay)
+        # optimizer = torch.optim.SGD(params=[{'params': biases, 'lr': 2 * lr}, {'params': weights}],
+        #                             lr=lr, momentum=momentum, weight_decay=weightDecay)
+        optimizer = torch.optim.AdamW(model.parameters(), lr = 3e-4, weight_decay = 1e-5)
     #Alternatively, load a checkpoint if it exists
     else:
         checkpoint = torch.load(checkpointPath)
@@ -82,7 +84,6 @@ def main():
 
     epochs = iterations // (len(trainDataset) // batchSize)
     # decayLrAt = [it // (len(trainDataset) // batchSize) for it in decayLrAt]
-    print(epochs)
 
     trainLossList = []
     epochList = []
@@ -137,8 +138,8 @@ def train(trainLoader, model, criterion, optimizer, epoch):
         optimizer.zero_grad()
         loss.backward()
 
-        if gradClip is not None:
-            clipGradient(optimizer, gradClip)
+        # if gradClip is not None:
+        #     clipGradient(optimizer, gradClip)
         
         #Update model params
         optimizer.step()
@@ -191,7 +192,7 @@ def validate(valLoader, model, criterion, epoch, optimizer):
         if loss < lowestValLoss:
             lowestValLoss = loss
             print("Lower validation loss reached, saving checkpoint")
-            saveCheckpoint(epoch, model, optimizer)
+            saveCheckpoint(epoch, model, optimizer, '../Checkpoints')
         losses.update(loss.item(), images.size(0))
         batchTime.update(time.time() - start)
 
