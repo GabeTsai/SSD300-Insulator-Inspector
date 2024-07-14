@@ -6,7 +6,7 @@ import sys
 
 dataPath = '/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data'
 
-labelMap = {'Background':0, 'Insulator':1, 'Flashover damage':2, 'Broken':3, 'No issues':4, 'notbroken-notflashed':4}
+labelMap = {'No issues':0, 'notbroken-notflashed':0, 'Insulator':1, 'Flashover damage':2, 'Broken':3}
 
 with open (os.path.join(dataPath, 'labels.json'), 'r') as f:
     labels = json.load(f)
