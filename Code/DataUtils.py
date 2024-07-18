@@ -7,7 +7,7 @@ from PIL import Image, ImageStat, ImageDraw, ImageFilter
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-labelMap = {'Background':0, 'Insulator':1, 'Flashover damage':2, 'Broken':3, 'No issues':4, 'notbroken-notflashed':4}
+labelMap = {'No issues':0, 'Insulator':1, 'Flashover damage':2, 'Broken':3}
 
 def coordToBoundary(bboxes):
     """
