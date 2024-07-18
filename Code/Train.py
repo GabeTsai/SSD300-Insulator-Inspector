@@ -11,7 +11,7 @@ from DataUtils import *
 dataFolderPath = '/Users/HP/Documents/GitHub/SSD300-Insulator-Inspector/Data/ProcessedData'
 
 #Model params
-numClasses = 5
+numClasses = 4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.manual_seed(1337)
 

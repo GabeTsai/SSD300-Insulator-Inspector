@@ -95,7 +95,7 @@ def main():
     imgPath = test_images[i]
     img = Image.open(imgPath, mode = 'r')
     img = img.convert('RGB')
-    detect(img, minScore = 0.2, maxOverlap = 0.3, topK = 100).show()
+    detect(img, minScore = 0.2, maxOverlap = 0.5, topK = 100).show()
     
 if __name__ == '__main__':
     main()
